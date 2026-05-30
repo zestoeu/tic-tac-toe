@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a2e;
+      font-family: 'Segoe UI', sans-serif;
+      color: #eee;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
+      color: #e94560;
+    }
+
+    .status {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      height: 1.6em;
+      color: #a0a0c0;
+    }
+
+    .status .highlight {
+      color: #e94560;
+      font-weight: bold;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 110px);
+      grid-template-rows: repeat(3, 110px);
+      gap: 10px;
+      margin: 0 auto 1.5rem;
+      width: fit-content;
+    }
+
+    .cell {
+      width: 110px;
+      height: 110px;
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 12px;
+      font-size: 3rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+      user-select: none;
+    }
+
+    .cell:hover:not(.taken) {
+      background: #0f3460;
+      transform: scale(1.05);
+    }
+
+    .cell.x { color: #e94560; }
+    .cell.o { color: #4ecca3; }
+
+    .cell.win {
+      background: #0f3460;
+      border-color: #e94560;
+      animation: pulse 0.5s ease;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .scores {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-card {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 10px;
+      padding: 0.6rem 1.4rem;
+      min-width: 90px;
+    }
+
+    .score-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+    }
+
+    .score-card.x-card .label { color: #e94560; }
+    .score-card.o-card .label { color: #4ecca3; }
+    .score-card.tie-card .label { color: #a0a0c0; }
+
+    .score-card .value {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .score-card.x-card .value { color: #e94560; }
+    .score-card.o-card .value { color: #4ecca3; }
+
+    .btn {
+      background: #e94560;
+      color: white;
+      border: none;
+      padding: 0.7rem 2rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover {
+      background: #c73652;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TIC TAC TOE</h1>
+    <div class="status" id="status">Player <span class="highlight">X</span>'s turn</div>
+
+    <div class="scores">
+      <div class="score-card x-card">
+        <div class="label">X Wins</div>
+        <div class="value" id="score-x">0</div>
+      </div>
+      <div class="score-card tie-card">
+        <div class="label">Ties</div>
+        <div class="value" id="score-tie">0</div>
+      </div>
+      <div class="score-card o-card">
+        <div class="label">O Wins</div>
+        <div class="value" id="score-o">0</div>
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="cell" data-i="0"></div>
+      <div class="cell" data-i="1"></div>
+      <div class="cell" data-i="2"></div>
+      <div class="cell" data-i="3"></div>
+      <div class="cell" data-i="4"></div>
+      <div class="cell" data-i="5"></div>
+      <div class="cell" data-i="6"></div>
+      <div class="cell" data-i="7"></div>
+      <div class="cell" data-i="8"></div>
+    </div>
+
+    <button class="btn" id="reset-btn">New Game</button>
+  </div>
+
+  <script>
+    const WINS = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    let board = Array(9).fill(null);
+    let currentPlayer = 'X';
+    let gameOver = false;
+    let scores = { X: 0, O: 0, tie: 0 };
+
+    const cells = document.querySelectorAll('.cell');
+    const statusEl = document.getElementById('status');
+
+    function checkWinner() {
+      for (const [a, b, c] of WINS) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return { winner: board[a], line: [a, b, c] };
+        }
+      }
+      if (board.every(Boolean)) return { winner: null, line: [] };
+      return null;
+    }
+
+    function setStatus(msg) {
+      statusEl.innerHTML = msg;
+    }
+
+    function handleClick(e) {
+      const i = parseInt(e.target.dataset.i);
+      if (gameOver || board[i]) return;
+
+      board[i] = currentPlayer;
+      const cell = cells[i];
+      cell.textContent = currentPlayer;
+      cell.classList.add(currentPlayer.toLowerCase(), 'taken');
+
+      const result = checkWinner();
+      if (result) {
+        gameOver = true;
+        if (result.winner) {
+          result.line.forEach(idx => cells[idx].classList.add('win'));
+          const color = result.winner === 'X' ? '#e94560' : '#4ecca3';
+          setStatus(`<span style="color:${color};font-weight:bold">${result.winner}</span> wins! 🎉`);
+          scores[result.winner]++;
+          document.getElementById(`score-${result.winner.toLowerCase()}`).textContent = scores[result.winner];
+        } else {
+          setStatus(`It's a <span class="highlight">tie</span>!`);
+          scores.tie++;
+          document.getElementById('score-tie').textContent = scores.tie;
+        }
+        return;
+      }
+
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      const nextColor = currentPlayer === 'X' ? '#e94560' : '#4ecca3';
+      setStatus(`Player <span style="color:${nextColor};font-weight:bold">${currentPlayer}</span>'s turn`);
+    }
+
+    function resetGame() {
+      board = Array(9).fill(null);
+      currentPlayer = 'X';
+      gameOver = false;
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.className = 'cell';
+      });
+      setStatus(`Player <span class="highlight">X</span>'s turn`);
+    }
+
+    cells.forEach(cell => cell.addEventListener('click', handleClick));
+    document.getElementById('reset-btn').addEventListener('click', resetGame);
+  </script>
+</body>
+</html>
